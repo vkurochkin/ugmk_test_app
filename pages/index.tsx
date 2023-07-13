@@ -13,19 +13,12 @@ import {
 
 import {useEffect, useState} from "react";
 
-import {factoryBarColors, months} from "@/pages/common/constants";
+import {factoryBarColors, months} from "@/common/constants";
 import styles from '@/styles/Home.module.css';
+import {IProduct} from "@/common/interfaces/Product";
+import {getMonthFromDateStr} from "@/common/utils";
 
 const inter = Inter({ subsets: ['latin'] });
-
-interface IProduct {
-  id: number;
-  factory_id: number;
-  date: string;
-  product1: number;
-  product2: number;
-  product3: number;
-}
 
 interface IFactoryProductsInMonth {
   month: string;
@@ -45,7 +38,7 @@ const getProductsByMonth = async (): Promise<Array<IFactoryProductsInMonth>> => 
   
   data.forEach((elem: IProduct) => {
     if (elem.date) {
-      const month = +elem.date.split('/')[1] - 1;
+      const month = getMonthFromDateStr(elem.date);
       const productCount = elem.product1 + elem.product2 + elem.product3;
       if (elem.factory_id == 1) {
         dataGroupedByMonth[month].factory1 += productCount;
