@@ -7,7 +7,7 @@
   gap: 1.5rem;
 }
 
-.description {
+.filter {
   display: inherit;
   align-items: inherit;
   justify-content: flex-end;
@@ -21,13 +21,7 @@
   border-radius: var(--border-radius);
 }
 
-.description a {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.description p {
+.filter p {
   position: relative;
   margin: 0;
   padding: 1rem;
@@ -36,45 +30,21 @@
 .center {
   display: inherit;
   align-items: inherit;
+  justify-content: center;
   max-width: var(--max-width);
-  padding: 1rem;
+  width: 100%;
+
+  padding: 0.5rem;
 
   border: 1px solid rgb(var(--foreground-rgb));
   border-radius: var(--border-radius);
 }
 
 /* Mobile */
-@media (max-width: 700px) {
-  .center {
-    padding: 8rem 0 6rem;
-  }
-
-  .description {
-    font-size: 0.8rem;
-  }
-
-  .description p,
-  .description div {
-    display: flex;
-    justify-content: center;
-    position: fixed;
-    width: 100%;
-  }
-
-  .description p {
-    align-items: center;
-    inset: 0 0 auto;
-    padding: 2rem 1rem 1.4rem;
-    background-clip: padding-box;
-    backdrop-filter: blur(24px);
-  }
-
-  .description div {
-    align-items: flex-end;
-    pointer-events: none;
-    inset: auto 0 0;
-    padding: 2rem;
-    height: 200px;
-    z-index: 1;
+@media (max-width: 1148px) {
+  .filter,
+  .center
+  {
+    border: none;
   }
 }

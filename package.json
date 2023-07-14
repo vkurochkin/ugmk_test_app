@@ -7,6 +7,8 @@
     "dev": "next dev",
     "start": "next build && next start",
     "start:server": "json-server products.json --port 3001",
+    "dockerize": "docker build -t ugmk_test_app .",
+    "start-container": "docker run --rm -d -p 3000:3000 ugmk_test_app",
     "lint": "next lint"
   },
   "dependencies": {

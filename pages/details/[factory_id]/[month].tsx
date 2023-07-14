@@ -6,7 +6,7 @@ import {useEffect, useState} from "react";
 import {IProduct} from "@/common/interfaces/Product";
 import {getMonthFromDateStr} from "@/common/utils";
 import styles from '@/styles/Home.module.css';
-import {months} from "@/common/constants";
+import {months, productTypes} from "@/common/constants";
 
 interface IMonthProduct {
     name: string;
@@ -25,15 +25,17 @@ export default function Page({data}: any) {
 
     return (productsAreLoaded &&
         <div className={styles.main}>
-            {factory_id && month && (<p>производство продукции на Фабрике {+factory_id === 1 ? 'A' : 'B'} в {months[+month]}</p>)}
-            <PieChart width={400} height={400}>
+            {factory_id && month
+                && <h2>производство продукции на Фабрике {+factory_id === 1 ? 'A' : 'Б'} в {months[+month]}</h2>
+            }
+            <PieChart width={600} height={350}>
                 <Pie
                     dataKey="value"
                     isAnimationActive={false}
                     data={data}
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
+                    outerRadius={100}
                     fill="#8884d8"
                     label
                 />
@@ -50,26 +52,17 @@ export const getServerSideProps: GetServerSideProps<{
     const data = await res.json();
 
     const { factory_id, month } = query;
-    // console.log(factory_id, month);
-    const result = [{
-        name: 'Продукт 1',
-        value: 0,
-    }, {
-        name: 'Продукт 2',
-        value: 0,
-    }, {
-        name: 'Продукт 3',
-        value: 0,
-    }];
+    const result: Array<IMonthProduct> = productTypes.filter(productType => productType.id > 0)
+        .map(productType => ({name: productType.value, value: 0}));
 
     if (factory_id && month) {
-        const productsByFactory = data.filter((product: IProduct) =>
-            product.factory_id === +factory_id && product.date && getMonthFromDateStr(product.date) === +month);
-        productsByFactory.forEach((elem: IProduct) => {
-            result[0].value += elem.product1;
-            result[1].value += elem.product2;
-            result[2].value += elem.product3;
-        });
+        data.filter((product: IProduct) =>
+            product.factory_id === +factory_id && getMonthFromDateStr(product.date) === +month)
+            .forEach((elem: IProduct) => {
+                result[0].value += elem.product1;
+                result[1].value += elem.product2;
+                result[2].value += elem.product3;
+            });
     }
 
     return { props: { data: result } }

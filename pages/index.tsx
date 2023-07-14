@@ -8,12 +8,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend
+  Legend, ResponsiveContainer
 } from "recharts";
 
-import {useEffect, useState} from "react";
+import {ChangeEvent, useEffect, useState} from "react";
 
-import {factoryBarColors, months} from "@/common/constants";
+import {factories, months, productTypeKey, productTypes} from "@/common/constants";
 import styles from '@/styles/Home.module.css';
 import {IProduct} from "@/common/interfaces/Product";
 import {getMonthFromDateStr} from "@/common/utils";
@@ -26,7 +26,7 @@ interface IFactoryProductsInMonth {
   factory2: number;
 }
 
-const getProductsByMonth = async (): Promise<Array<IFactoryProductsInMonth>> => {
+const getProductsByMonth = async (productTypeMask: Array<number>): Promise<Array<IFactoryProductsInMonth>> => {
   const res = await fetch('http://localhost:3001/products');
   const data = await res.json();
   
@@ -35,11 +35,12 @@ const getProductsByMonth = async (): Promise<Array<IFactoryProductsInMonth>> => 
     factory1: 0,
     factory2: 0
   }));
-  
+
   data.forEach((elem: IProduct) => {
-    if (elem.date) {
-      const month = getMonthFromDateStr(elem.date);
-      const productCount = elem.product1 + elem.product2 + elem.product3;
+    const month = getMonthFromDateStr(elem.date);
+    if (typeof month == "number") {
+      const productCount = elem.product1 * productTypeMask[0]
+          + elem.product2 * productTypeMask[1] + elem.product3 * productTypeMask[2];
       if (elem.factory_id == 1) {
         dataGroupedByMonth[month].factory1 += productCount;
       } else {
@@ -55,14 +56,45 @@ const getProductsByMonth = async (): Promise<Array<IFactoryProductsInMonth>> => 
   }));
 };
 
-export default function Home({ data }: any) {
+export default function Home() {
   const [productsAreLoaded, setProductsAreLoaded] = useState<boolean>(false);
+  const [products, setProducts] = useState<Array<IFactoryProductsInMonth>>([]);
+  const [selectedProductType, setProductType] = useState<string>(productTypes[0].value);
+
   const router = useRouter();
   
   useEffect( () => {
-    setProductsAreLoaded(true);
-  }, []);
+    (async () => {
+      const productType = localStorage.getItem(productTypeKey);
+      if (productType) {
+        setProductType(productType);
+      }
+      
+      let productTypeMask: Array<number> = [1, 1, 1];
+      switch (selectedProductType) {
+        case productTypes[1].value:
+          productTypeMask = [1, 0, 0];
+          break;
+        case productTypes[2].value:
+          productTypeMask = [0, 1, 0];
+          break;
+        case productTypes[3].value:
+          productTypeMask = [0, 0, 1];
+          break;
+        default:
+          break;
+      }
+      
+      setProducts(await getProductsByMonth(productTypeMask));
+    })().then(() => setProductsAreLoaded(true));
+  }, [selectedProductType]);
 
+  const handleProductTypeChange = (e: ChangeEvent) => {
+    const value = (e.target as HTMLSelectElement).value;
+    setProductType(value);
+    localStorage.setItem(productTypeKey, value);
+  }
+  
   const handleClick0 = async (data: any, month: number) => {
     await router.push(`/details/1/${month}`);
   }
@@ -80,45 +112,48 @@ export default function Home({ data }: any) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={`${styles.main} ${inter.className}`}>
-        <div className={styles.description}>
+        <div className={styles.filter}>
           <p>
             Фильтр по типу продукции
           </p>
           <div>
-            <select>
-              <option>Продукт 1</option>
-              <option>Продукт 2</option>
-              <option>Продукт 3</option>
+            <select
+              value={selectedProductType}
+              onChange={e => handleProductTypeChange(e)}>
+              {productTypes.map(productType=>
+                  <option key={productType.id} value={productType.value}>
+                    {productType.value}
+                  </option>
+              )}
             </select>
           </div>
         </div>
 
         <div className={styles.center}>
-          {productsAreLoaded && <BarChart
-              width={980}
-              height={400}
-              data={data}
-              margin={{
-                top: 5,
-                right: 30,
-                left: 20,
-                bottom: 5
-              }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="factory1" name="Фабрика A" fill={factoryBarColors[0]} cursor="pointer" onClick={handleClick0} />
-            <Bar dataKey="factory2" name="Фабрика Б" fill={factoryBarColors[1]} cursor="pointer" onClick={handleClick1} />
-          </BarChart>}
+          {productsAreLoaded &&
+            <ResponsiveContainer height={400} minWidth={700} width="99%" aspect={3}>
+              <BarChart
+                width={980}
+                height={400}
+                data={products}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="factory1" name={factories[0].name} fill={factories[0].color} cursor="pointer" onClick={handleClick0} />
+                <Bar dataKey="factory2" name={factories[1].name} fill={factories[1].color} cursor="pointer" onClick={handleClick1} />
+              </BarChart>
+            </ResponsiveContainer>}
         </div>
       </main>
     </>
   )
-}
-
-export async function getServerSideProps() {
-  return { props: { data: await getProductsByMonth() } }
 }
